@@ -14,7 +14,7 @@ class MPC {
 
   // Solve the model given an initial state, polynomial coefficients and latency in milliseconds.
   // Return the first actuation.
-  vector<double> Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, unsigned int latency);
+  vector<double> Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, bool latency);
 
   // This value assumes the model presented in the classroom is used.
   //
@@ -30,6 +30,9 @@ class MPC {
 
   // Reference velocity in mph.
   static constexpr const double ref_v = 50.0;
+
+  // Multiplier for MPH to m/s.
+  static constexpr const double mph_to_mps = 0.44704;
 };
 
 #endif /* MPC_H */

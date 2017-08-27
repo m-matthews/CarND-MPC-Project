@@ -9,7 +9,7 @@
 #include "MPC.h"
 #include "json.hpp"
 
-#define LATENCY 0 // Latency in milliseconds.
+#define LATENCY 100 // Latency in milliseconds.
 
 // for convenience
 using json = nlohmann::json;
@@ -124,14 +124,16 @@ int main() {
           }
           coeffs = polyfit(veh_ptsx, veh_ptsy, 3);
 
-          // State is zero in vehicle coordinate system.
-          px = 0.0;
-          py = 0.0;
-          psi = 0.0;
-          double cte = polyeval(coeffs, px);
-          double epsi = -atan(coeffs[1]);
+          // State non-zero as it includes latency values.
+          v *= MPC::mph_to_mps; // mph -> m/s
+          psi = -v*delta/MPC::Lf*latency_s;
+          px = v*cos(psi)*latency_s;
+          py = v*sin(psi)*latency_s;
 
-          state<<px,py,psi,v,cte,epsi;
+          double cte = polyeval(coeffs, px);
+          double epsi = psi - atan(coeffs[1] + 2*coeffs[2]*px + 2*coeffs[3]*pow(px,2));
+
+          state << px, py, psi, v, cte, epsi;
 
           auto solution = mpc.Solve(state, coeffs, LATENCY);
 

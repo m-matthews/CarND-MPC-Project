@@ -3,7 +3,6 @@
 #include <iostream>
 #include <cppad/cppad.hpp>
 #include <cppad/ipopt/solve.hpp>
-#include "Eigen-3.3/Eigen/Core"
 
 using CppAD::AD;
 
@@ -40,7 +39,7 @@ class FG_eval {
     for (unsigned int t = 0; t < N; ++t) {
       fg[0] += 3000 * CppAD::pow(vars[cte_start + t], 2);            // Priority to follow the centre line.
       fg[0] +=  200 * CppAD::pow(vars[epsi_start + t], 2);           // Priority to keep to expected angle.
-      fg[0] +=   10 * CppAD::pow(vars[v_start + t] - MPC::ref_v, 2); // Priority to reach ref_v velocity.
+      fg[0] +=   10 * CppAD::pow(vars[v_start + t] - MPC::ref_v*MPC::mph_to_mps, 2); // Priority to reach ref_v velocity.
     }
 
     // Minimize the use of actuators.
@@ -106,7 +105,7 @@ class FG_eval {
 MPC::MPC() {}
 MPC::~MPC() {}
 
-vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, unsigned int latency) {
+vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, bool latency) {
   bool ok = true;
   typedef CPPAD_TESTVECTOR(double) Dvector;
 
@@ -222,8 +221,16 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, unsigne
   vector<double> result;
 
   // Angle and Throttle setting.
-  result.push_back(solution.x[delta_start]);
-  result.push_back(solution.x[a_start]);
+  if(latency) {
+    // When using latency, the average of 3 results is used as per discussion at
+    // https://discussions.udacity.com/t/how-to-take-into-account-latency-of-the-system/248671/13
+    result.push_back((solution.x[delta_start+0]+solution.x[delta_start+1]+solution.x[delta_start+2])/3.0);
+    result.push_back((solution.x[a_start+0]+solution.x[a_start+1]+solution.x[a_start+2])/3.0);
+  }
+  else {
+    result.push_back(solution.x[delta_start]);
+    result.push_back(solution.x[a_start]);
+  }
 
   // X/Y coordinate pairs (vehicle coordinate system).
   for(unsigned int i = 0; i < N - 1; ++i) {
