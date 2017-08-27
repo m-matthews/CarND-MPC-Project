@@ -29,7 +29,7 @@ class MPC {
   static constexpr double Lf = 2.67;
 
   // Reference velocity in mph.
-  static constexpr const double ref_v = 50.0;
+  static constexpr const double ref_v = 90.0;  // Initial development at 50mph. 100mph works, however can 'touch' the side, so 90mph used.
 
   // Multiplier for MPH to m/s.
   static constexpr const double mph_to_mps = 0.44704;
